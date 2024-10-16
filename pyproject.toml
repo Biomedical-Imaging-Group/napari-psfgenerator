@@ -5,8 +5,8 @@ description = "Plugin to compute the focal electric field"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-  {name = ""},
-  {email = ""},
+  {name = "Vasiliki Stergiopoulou"},
+  {email = "vasiliki.stergiopoulou@epfl.ch"},
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
