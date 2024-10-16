@@ -32,7 +32,7 @@ pip install -e .
 napari
 ```
 
-Here we installed the package in editable mode, so you can modify the code and see the changes in real-time.
+Here we installed the package in "editable mode", so we can modify the code and see the changes in real-time.
 
 [//]: # (You can install `napari-psfgenerator` via [pip]:)
 

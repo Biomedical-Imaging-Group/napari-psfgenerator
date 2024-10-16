@@ -1,7 +1,8 @@
 name: napari-psfgenerator
 display_name: PSF Generator
 # use 'hidden' to remove plugin from napari hub search results
-visibility: public
+#other wise 'public'
+visibility: hidden
 # see https://napari.org/stable/plugins/manifest.html for valid categories
 categories: ["Annotation", "Segmentation", "Acquisition"]
 contributions:
@@ -55,3 +56,4 @@ contributions:
       display_name: Autogenerate Threshold
     - command: napari-psfgenerator.make_qwidget
       display_name: Example QWidget
+
