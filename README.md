@@ -23,15 +23,29 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `napari-psfgenerator` via [pip]:
+Set up a Python virtual environment and install napari following this [guide]. 
 
-    pip install napari-psfgenerator
+Move to the correct working directory, then install the plugin and try it out!
 
+```bash
+pip install -e .
+napari
+```
 
+Here we installed the package in editable mode, so you can modify the code and see the changes in real-time.
 
-To install latest development version :
+[//]: # (You can install `napari-psfgenerator` via [pip]:)
 
-    pip install git+https://github.com/VStergiop/napari-psfgenerator.git
+[//]: # ()
+[//]: # (    pip install napari-psfgenerator)
+
+[//]: # ()
+[//]: # ()
+[//]: # ()
+[//]: # (To install latest development version :)
+
+[//]: # ()
+[//]: # (    pip install git+https://github.com/VStergiop/napari-psfgenerator.git)
 
 
 ## Contributing
@@ -58,6 +72,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [napari-plugin-template]: https://github.com/napari/napari-plugin-template
+[guide]: https://docs.conda.io/projects/conda/en/4.6.0/commands/list.html
 
 [file an issue]: https://github.com/VStergiop/napari-psfgenerator/issues
 
