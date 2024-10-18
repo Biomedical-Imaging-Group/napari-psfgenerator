@@ -30,10 +30,9 @@ Replace code below according to your needs.
 """
 from typing import TYPE_CHECKING
 
-from magicgui import magic_factory
-from magicgui.widgets import CheckBox, Container, create_widget
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
-from skimage.util import img_as_float
+from propagators import ScalarCartesianPropagator, ScalarPolarPropagator, VectorialCartesianPropagator, VectorialPolarPropagator
+import torch
+import numpy as np
 
 if TYPE_CHECKING:
     import napari
@@ -42,87 +41,60 @@ if TYPE_CHECKING:
 # Uses the `autogenerate: true` flag in the plugin manifest
 # to indicate it should be wrapped as a magicgui to autogenerate
 # a widget.
-def threshold_autogenerate_widget(
-    img: "napari.types.ImageData",
-    threshold: "float",
-) -> "napari.types.LabelsData":
-    return img_as_float(img) > threshold
+def propagator_widget(
+        n_pix_pupil: int = 203,
+        n_pix_psf: int = 201,
+        na: float = 1.4,
+        wavelength: float = 632,
+        fov: float = 2000,
+        defocus: float = 4000,
+        n_defocus: int = 200,
+        apod_factor: bool = False,
+        gibson_lanni: bool = True,
+        zernike_astigmatism: float = 0.0,
+        e0x: float = 1.0,
+        e0y: float = 0.0) -> "napari.types.ImageData":
+
+    # Parameters
+    kwargs = {
+        'n_pix_pupil': n_pix_pupil,
+        'n_pix_psf': n_pix_psf,
+        'n_defocus': n_defocus,
+        'wavelength': wavelength,
+        'zernike_coefficients': [0, 0, 0, zernike_astigmatism],
+        'na': na,
+        'fov': fov,
+        'defocus_min': -defocus,
+        'defocus_max': defocus,
+        'apod_factor': apod_factor,
+        'gibson_lanni': gibson_lanni
+    }
+
+    # Define propagators
+    propagators = [
+        ScalarCartesianPropagator(**kwargs),
+        # ScalarPolarPropagator(**kwargs),
+        VectorialCartesianPropagator(e0x=e0x, e0y=e0y, **kwargs),
+        # VectorialPolarPropagator(e0x=e0x, e0y=e0y, **kwargs)
+    ]
+
+    result_images = []
+
+    # Process and return fields for each propagator
+    for propagator in propagators:
+        class_name = propagator.__class__.__name__
+        print(f"Computing field for {class_name}...")
+        field = propagator.compute_focus_field()
+
+        if 'Scalar' in class_name:
+            # For scalar propagators, return the absolute value of the field
+            result_images.append(torch.abs(field).numpy().squeeze())
+
+        if 'Vectorial' in class_name:
+            # For vectorial propagators, return the intensity (sum of squares of components)
+            intensity = torch.sqrt(torch.sum(torch.abs(field[:, :, :, :].squeeze()) ** 2, dim=1)).squeeze()
+            result_images.append(intensity.numpy())
+            
 
 
-# the magic_factory decorator lets us customize aspects of our widget
-# we specify a widget type for the threshold parameter
-# and use auto_call=True so the function is called whenever
-# the value of a parameter changes
-@magic_factory(
-    threshold={"widget_type": "FloatSlider", "max": 1}, auto_call=True
-)
-def threshold_magic_widget(
-    img_layer: "napari.layers.Image", threshold: "float"
-) -> "napari.types.LabelsData":
-    return img_as_float(img_layer.data) > threshold
-
-
-# if we want even more control over our widget, we can use
-# magicgui `Container`
-class ImageThreshold(Container):
-    def __init__(self, viewer: "napari.viewer.Viewer"):
-        super().__init__()
-        self._viewer = viewer
-        # use create_widget to generate widgets from type annotations
-        self._image_layer_combo = create_widget(
-            label="Image", annotation="napari.layers.Image"
-        )
-        self._threshold_slider = create_widget(
-            label="Threshold", annotation=float, widget_type="FloatSlider"
-        )
-        self._threshold_slider.min = 0
-        self._threshold_slider.max = 1
-        # use magicgui widgets directly
-        self._invert_checkbox = CheckBox(text="Keep pixels below threshold")
-
-        # connect your own callbacks
-        self._threshold_slider.changed.connect(self._threshold_im)
-        self._invert_checkbox.changed.connect(self._threshold_im)
-
-        # append into/extend the container with your widgets
-        self.extend(
-            [
-                self._image_layer_combo,
-                self._threshold_slider,
-                self._invert_checkbox,
-            ]
-        )
-
-    def _threshold_im(self):
-        image_layer = self._image_layer_combo.value
-        if image_layer is None:
-            return
-
-        image = img_as_float(image_layer.data)
-        name = image_layer.name + "_thresholded"
-        threshold = self._threshold_slider.value
-        if self._invert_checkbox.value:
-            thresholded = image < threshold
-        else:
-            thresholded = image > threshold
-        if name in self._viewer.layers:
-            self._viewer.layers[name].data = thresholded
-        else:
-            self._viewer.add_labels(thresholded, name=name)
-
-
-class ExampleQWidget(QWidget):
-    # your QWidget.__init__ can optionally request the napari viewer instance
-    # use a type annotation of 'napari.viewer.Viewer' for any parameter
-    def __init__(self, viewer: "napari.viewer.Viewer"):
-        super().__init__()
-        self.viewer = viewer
-
-        btn = QPushButton("Click me!")
-        btn.clicked.connect(self._on_click)
-
-        self.setLayout(QHBoxLayout())
-        self.layout().addWidget(btn)
-
-    def _on_click(self):
-        print("napari has", len(self.viewer.layers), "layers")
+    return np.array(result_images)  # This would be a 4D numpy array, which napari can visualize.

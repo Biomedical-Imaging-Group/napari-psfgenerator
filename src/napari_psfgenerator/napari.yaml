@@ -19,18 +19,9 @@ contributions:
     - id: napari-psfgenerator.make_sample_data
       python_name: napari_psfgenerator._sample_data:make_sample_data
       title: Load sample data from PSF Generator
-    - id: napari-psfgenerator.make_container_widget
-      python_name: napari_psfgenerator:ImageThreshold
-      title: Make threshold Container widget
-    - id: napari-psfgenerator.make_magic_widget
-      python_name: napari_psfgenerator:threshold_magic_widget
-      title: Make threshold magic widget
     - id: napari-psfgenerator.make_function_widget
-      python_name: napari_psfgenerator:threshold_autogenerate_widget
-      title: Make threshold function widget
-    - id: napari-psfgenerator.make_qwidget
-      python_name: napari_psfgenerator:ExampleQWidget
-      title: Make example QWidget
+      python_name: napari_psfgenerator:propagator_widget
+      title: Make function widget
   readers:
     - command: napari-psfgenerator.get_reader
       accepts_directories: false
@@ -47,13 +38,6 @@ contributions:
       display_name: PSF Generator
       key: unique_id.1
   widgets:
-    - command: napari-psfgenerator.make_container_widget
-      display_name: Container Threshold
-    - command: napari-psfgenerator.make_magic_widget
-      display_name: Magic Threshold
     - command: napari-psfgenerator.make_function_widget
       autogenerate: true
       display_name: Autogenerate Threshold
-    - command: napari-psfgenerator.make_qwidget
-      display_name: Example QWidget
-
