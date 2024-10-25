@@ -20,7 +20,7 @@ contributions:
       python_name: napari_psfgenerator._sample_data:make_sample_data
       title: Load sample data from PSF Generator
     - id: napari-psfgenerator.make_function_widget
-      python_name: napari_psfgenerator:propagator_widget
+      python_name: napari_psfgenerator:propagators_container
       title: Make function widget
   readers:
     - command: napari-psfgenerator.get_reader
@@ -39,5 +39,4 @@ contributions:
       key: unique_id.1
   widgets:
     - command: napari-psfgenerator.make_function_widget
-      autogenerate: true
-      display_name: Autogenerate Threshold
+      display_name: Propagators
