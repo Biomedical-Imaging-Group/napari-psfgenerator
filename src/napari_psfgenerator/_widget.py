@@ -1,15 +1,20 @@
+import os
+from qtpy.QtWidgets import QFileDialog
 from magicgui import widgets
+from skimage import io as skio
 import torch
-import numpy as np
-from propagators import ScalarCartesianPropagator, VectorialCartesianPropagator, ScalarPolarPropagator, VectorialPolarPropagator
+from psf_generator.propagators.scalar_cartesian_propagator import ScalarCartesianPropagator
+from psf_generator.propagators.scalar_spherical_propagator import ScalarSphericalPropagator
+from psf_generator.propagators.vectorial_cartesian_propagator import VectorialCartesianPropagator
+from psf_generator.propagators.vectorial_spherical_propagator import VectorialSphericalPropagator
 from napari import current_viewer
-
+import numpy as np
 viewer = current_viewer()  # Get the current Napari viewer
 
 def propagators_container():
     # Dropdown for propagator type selection
     propagator_type = widgets.ComboBox(
-        choices=["ScalarCartesian", "ScalarPolar", "VectorialCartesian", "VectorialPolar"],
+        choices=["ScalarCartesian", "ScalarSpherical", "VectorialCartesian", "VectorialSpherical"],
         label="Select Propagator")
 
     # --- Physical Parameters ---
@@ -30,7 +35,8 @@ def propagators_container():
             widgets.Label(value="Numerical Parameters"),
             widgets.SpinBox(value=203, label="Pixels in Pupil", min=1),
             widgets.SpinBox(value=201, label="Pixels in PSF", min=1),
-            widgets.SpinBox(value=200, label="Z-Stacks", min=1)
+            widgets.SpinBox(value=200, label="Z-Stacks", min=1),
+            widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device")
         ],
         layout="vertical"
     )
@@ -50,10 +56,9 @@ def propagators_container():
         layout="vertical",
     )
 
-    # Button to trigger computation
+    # Buttons and Result Display
     compute_button = widgets.PushButton(text="Compute")
-
-    # Result display
+    save_button = widgets.PushButton(text="Save Image")
     result_viewer = widgets.Label(value="Result will be displayed here")
 
     # Define a container to hold all grouped sections
@@ -64,24 +69,36 @@ def propagators_container():
             numerical_parameters,
             options_parameters,
             compute_button,
+            save_button,
             result_viewer
         ],
         layout="vertical"
     )
+
+    # Store the computed result for saving
+    computed_result = {'data': None}
 
     # Function to update visible widgets based on the selected propagator type
     def update_propagator_params(event):
         selected_type = propagator_type.value
 
         # Show/hide Vectorial-specific parameters in Options
-        options_parameters[5].visible = selected_type.startswith("Vectorial")
-        options_parameters[6].visible = selected_type.startswith("Vectorial")
+        is_vectorial = selected_type.startswith("Vectorial")
+        options_parameters[5].visible = is_vectorial  # e0x
+        options_parameters[6].visible = is_vectorial  # e0y
+
+        # Show/hide Zernike Astigmatism for spherical propagators
+        is_spherical = "Cartesian" in selected_type
+        options_parameters[3].visible = is_spherical  # Zernike Astigmatism
 
     # Connect the dropdown value change to the update function
     propagator_type.changed.connect(update_propagator_params)
 
     # Initial update to set the correct visibility
     update_propagator_params(None)
+
+    # Store the computed result for saving
+    computed_result = {'data': None}  # Dictionary to hold the result image data
 
     # Compute button callback function
     def compute_result():
@@ -90,6 +107,7 @@ def propagators_container():
             'n_pix_pupil': numerical_parameters[1].value,
             'n_pix_psf': numerical_parameters[2].value,
             'n_defocus': numerical_parameters[3].value,
+            'device': numerical_parameters[4].value,
             'wavelength': physical_parameters[2].value,
             'na': physical_parameters[1].value,
             'fov': physical_parameters[3].value,
@@ -105,7 +123,7 @@ def propagators_container():
             if propagator_type.value == "ScalarCartesian":
                 propagator = ScalarCartesianPropagator(**kwargs)
             else:
-                propagator = ScalarPolarPropagator(**kwargs)
+                propagator = ScalarSphericalPropagator(**kwargs)
         else:
             kwargs.update({
                 'e0x': options_parameters[5].value,
@@ -114,7 +132,7 @@ def propagators_container():
             if propagator_type.value == "VectorialCartesian":
                 propagator = VectorialCartesianPropagator(**kwargs)
             else:
-                propagator = VectorialPolarPropagator(**kwargs)
+                propagator = VectorialSphericalPropagator(**kwargs)
 
         # Compute the field and display the result
         print(f"Computing field for {propagator_type.value}...")
@@ -122,15 +140,42 @@ def propagators_container():
 
         if 'Scalar' in propagator_type.value:
             field_amplitude = torch.abs(field)
-            result = (field_amplitude/field_amplitude.max()).numpy().squeeze()
+            result = (field_amplitude/field_amplitude.max()).cpu().numpy().squeeze()
         else:
             field_amplitude = torch.sqrt(torch.sum(torch.abs(field[:, :, :, :].squeeze()) ** 2, dim=1)).squeeze()
-            result = (field_amplitude/field_amplitude.max()).numpy()
+            result = (field_amplitude/field_amplitude.max()).cpu().numpy()
+
+        # Save the computed result
+        computed_result['data'] = result
 
         viewer.add_image(result, name=f"Result: {propagator_type.value}", colormap='inferno')
         result_viewer.value = f"Computation complete! Shape: {result.shape}"
 
+
     # Connect the compute button to the compute function
     compute_button.clicked.connect(compute_result)
+
+    # Save button callback function
+    def save_computed_image():
+        if computed_result['data'] is None:
+            result_viewer.value = "No image to save. Please compute an image first."
+            return
+
+        # Open a file save dialog
+        dialog = QFileDialog()
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setNameFilters(["TIFF files (*.tif)", "All files (*)"])
+        dialog.setDefaultSuffix("tif")
+        dialog.setWindowTitle("Save Image")
+        dialog.setGeometry(300, 300, 600, 400)  # Set dialog position and size (x, y, width, height)
+
+        if dialog.exec_():
+            filepath = dialog.selectedFiles()[0]
+            if filepath:
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)  # Ensure directory exists
+                skio.imsave(filepath, computed_result['data'], check_contrast=True)
+                result_viewer.value = f"Image saved to {filepath}"
+
+    save_button.clicked.connect(save_computed_image)
 
     return container
