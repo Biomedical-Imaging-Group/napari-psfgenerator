@@ -7,7 +7,17 @@
 [![codecov](https://codecov.io/gh/VStergiop/napari-psfgenerator/branch/main/graph/badge.svg)](https://codecov.io/gh/VStergiop/napari-psfgenerator)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-psfgenerator)](https://napari-hub.org/plugins/napari-psfgenerator)
 
-Plugin to compute the focal electric field
+## PSF Generator Napari Plugin
+
+The PSF Generator Napari Plugin provides an intuitive, interactive platform for simulating point spread functions (PSFs) directly within the Napari ecosystem. Built on PyTorch, this plugin supports both CPU and GPU-accelerated computations, ensuring fast and efficient simulations for fundamental and advanced optical modeling. Key features include:
+
+Flexible Propagation Models: Scalar and vectorial propagators in Cartesian and spherical coordinates.
+Customizable Parameters: Configure physical (e.g., numerical aperture, wavelength), numerical (e.g., pixel size, Z-stacks), and optical settings (e.g., Gibson-Lanni corrections, Zernike aberrations).
+Real-Time Visualization: Seamless integration with Napari for immediate visual feedback.
+Versatile API: Access propagators programmatically for custom workflows.
+Image Export: Save computed PSFs in TIFF format.
+
+This plugin is a powerful tool for researchers in optics, computational microscopy, and imaging science, bridging user-friendly interactivity with the computational capabilities of our Python library.
 
 ----------------------------------
 
