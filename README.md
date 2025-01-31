@@ -25,12 +25,24 @@ https://napari.org/stable/plugins/index.html
 
 Set up a Python virtual environment and install napari following this [guide]. 
 
-Move to the correct working directory, then install the plugin and try it out!
+After activating the virtual environment, you need first to install locally the [psf_generator library] following the instructions below.
 
 ```bash
+git clone git@github.com:Biomedical-Imaging-Group/psf_generator.git
+cd psf_generator
+pip install -e .
+```
+
+Move to the correct working directory, then install locally the [plugin] following the instructions below. 
+
+```bash
+cd .. # move to one directory above
+git clone git@github.com:Biomedical-Imaging-Group/napari-psfgenerator.git
 pip install -e .
 napari
 ```
+
+Now you can try the plugin out!
 
 Here we installed the package in "editable mode", so we can modify the code and see the changes in real-time.
 
@@ -80,3 +92,5 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
+[psf_generator library]: https://github.com/Biomedical-Imaging-Group/psf_generator
+[plugin]: https://github.com/Biomedical-Imaging-Group/napari-psfgenerator

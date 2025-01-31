@@ -8,7 +8,6 @@ from psf_generator.propagators.scalar_spherical_propagator import ScalarSpherica
 from psf_generator.propagators.vectorial_cartesian_propagator import VectorialCartesianPropagator
 from psf_generator.propagators.vectorial_spherical_propagator import VectorialSphericalPropagator
 from napari import current_viewer
-import numpy as np
 viewer = current_viewer()  # Get the current Napari viewer
 
 def propagators_container():
