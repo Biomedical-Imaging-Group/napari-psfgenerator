@@ -56,7 +56,7 @@ def propagators_container():
     )
 
     # Buttons and Result Display
-    compute_button = widgets.PushButton(text="Compute")
+    compute_button = widgets.PushButton(text="Compute and Display")
     save_button = widgets.PushButton(text="Save Image")
     result_viewer = widgets.Label(value="Result will be displayed here")
 
@@ -114,7 +114,7 @@ def propagators_container():
             'defocus_max': physical_parameters[4].value,
             'apod_factor': options_parameters[1].value,
             'gibson_lanni': options_parameters[2].value,
-            'zernike_coefficients': [0, 0, 0, options_parameters[3].value,options_parameters[4].value],
+            'zernike_coefficients': [0, 0, 0, 0, options_parameters[4].value, options_parameters[3].value],
         }
 
         # Add specific parameters based on the propagator type
