@@ -1,10 +1,8 @@
 # napari-psfgenerator
 
-[![License MIT](https://img.shields.io/pypi/l/napari-psfgenerator.svg?color=green)](https://github.com/VStergiop/napari-psfgenerator/raw/main/LICENSE)
+[![MIT License](https://img.shields.io/github/license/Biomedical-Imaging-Group/napari-psfgenerator)](https://github.com/Biomedical-Imaging-Group/napari-psfgenerator/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-psfgenerator.svg?color=green)](https://pypi.org/project/napari-psfgenerator)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-psfgenerator.svg?color=green)](https://python.org)
-[![tests](https://github.com/VStergiop/napari-psfgenerator/workflows/tests/badge.svg)](https://github.com/VStergiop/napari-psfgenerator/actions)
-[![codecov](https://codecov.io/gh/VStergiop/napari-psfgenerator/branch/main/graph/badge.svg)](https://codecov.io/gh/VStergiop/napari-psfgenerator)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-psfgenerator)](https://napari-hub.org/plugins/napari-psfgenerator)
 
 ## PSF Generator Napari Plugin
