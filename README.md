@@ -48,6 +48,7 @@ Move to the correct working directory, then install locally the [plugin] followi
 ```bash
 cd .. # move to one directory above
 git clone git@github.com:Biomedical-Imaging-Group/napari-psfgenerator.git
+cd napari-psfgenerator
 pip install -e .
 napari
 ```
