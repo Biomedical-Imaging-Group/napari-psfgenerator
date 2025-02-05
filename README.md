@@ -53,7 +53,7 @@ pip install -e .
 napari
 ```
 
-Now you can try the plugin out!
+Now you can try the plugin out! Click on the menu "Plugins" and select "Propagators (PSF Generator)".
 
 Here we installed the package in "editable mode", so we can modify the code and see the changes in real-time.
 

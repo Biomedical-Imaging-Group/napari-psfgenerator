@@ -28,6 +28,10 @@ def propagators_container():
         layout="vertical"
     )
 
+    if torch.cuda.is_available():
+        device_list = ["cpu", "cuda:0"]
+    else:
+        device_list = ["cpu"]
     # --- Numerical Parameters ---
     numerical_parameters = widgets.Container(
         widgets=[
@@ -35,7 +39,7 @@ def propagators_container():
             widgets.SpinBox(value=203, label="Pixels in Pupil", min=1),
             widgets.SpinBox(value=201, label="Pixels in PSF", min=1),
             widgets.SpinBox(value=200, label="Z-Stacks", min=1),
-            widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device")
+                widgets.ComboBox(choices=device_list, value="cpu", label="Device")
         ],
         layout="vertical"
     )
