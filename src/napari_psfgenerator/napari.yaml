@@ -2,9 +2,9 @@ name: napari-psfgenerator
 display_name: PSF Generator
 # use 'hidden' to remove plugin from napari hub search results
 #other wise 'public'
-visibility: hidden
+visibility: public
 # see https://napari.org/stable/plugins/manifest.html for valid categories
-categories: ["Annotation", "Segmentation", "Acquisition"]
+categories: ["Simulation"]
 contributions:
   commands:
     - id: napari-psfgenerator.get_reader
