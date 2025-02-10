@@ -25,15 +25,17 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
     "magicgui",
     "qtpy",
-    "scikit-image",
-    "napari",
+    "torch>=2.0.0",
+    "psf-generator",
     "pyqt5",
 ]
 
 [project.optional-dependencies]
+
+napari = ["napari"]
+
 testing = [
     "tox",
     "pytest",  # https://docs.pytest.org/en/latest/contents.html

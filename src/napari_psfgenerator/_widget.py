@@ -1,7 +1,6 @@
 import os
 from qtpy.QtWidgets import QFileDialog
 from magicgui import widgets
-from skimage import io as skio
 import torch
 from psf_generator.propagators.scalar_cartesian_propagator import ScalarCartesianPropagator
 from psf_generator.propagators.scalar_spherical_propagator import ScalarSphericalPropagator
@@ -176,8 +175,9 @@ def propagators_container():
             filepath = dialog.selectedFiles()[0]
             if filepath:
                 os.makedirs(os.path.dirname(filepath), exist_ok=True)  # Ensure directory exists
-                skio.imsave(filepath, computed_result['data'], check_contrast=True)
+                viewer.layers[-1].save(filepath)
                 result_viewer.value = f"Image saved to {filepath}"
+
 
     save_button.clicked.connect(save_computed_image)
 
