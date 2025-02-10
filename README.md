@@ -41,7 +41,7 @@ You can install `napari-psfgenerator` via [pip]:
 
 To install latest development version :
 
-    pip install git+https://github.com/VStergiop/napari-psfgenerator.git
+    pip install git+https://github.com/Biomedical-Imaging-Group/napari-psfgenerator.git
 
 
 Now you can try the plugin out! Open napari, click on the menu "Plugins" and select "Propagators (PSF Generator)".
