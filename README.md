@@ -7,15 +7,17 @@
 
 ## PSF Generator Napari Plugin
 
-The PSF Generator Napari Plugin provides an intuitive, interactive platform for simulating point spread functions (PSFs) directly within the Napari ecosystem. Built on PyTorch, this plugin supports both CPU and GPU-accelerated computations, ensuring fast and efficient simulations for fundamental and advanced optical modeling. Key features include:
+The **PSF Generator Napari Plugin** provides an intuitive, interactive platform for simulating **Point Spread Functions (PSFs)** directly within the Napari ecosystem. Built on **PyTorch**, this plugin supports both **CPU and GPU-accelerated** computations, ensuring fast and efficient simulations for fundamental and advanced optical modeling.
 
-Flexible Propagation Models: Scalar and vectorial propagators in Cartesian and spherical coordinates.
-Customizable Parameters: Configure physical (e.g., numerical aperture, wavelength), numerical (e.g., pixel size, Z-stacks), and optical settings (e.g., Gibson-Lanni corrections, Zernike aberrations).
-Real-Time Visualization: Seamless integration with Napari for immediate visual feedback.
-Versatile API: Access propagators programmatically for custom workflows.
-Image Export: Save computed PSFs in TIFF format.
+### Key Features:
 
-This plugin is a powerful tool for researchers in optics, computational microscopy, and imaging science, bridging user-friendly interactivity with the computational capabilities of our Python library.
+- **Flexible Propagation Models:** Scalar and vectorial propagators in Cartesian and spherical coordinates.
+- **Customizable Parameters:** Configure **physical** (e.g., numerical aperture, wavelength), **numerical** (e.g., pixel size, Z-stacks), and **optical settings** (e.g., Gibson-Lanni corrections, Zernike aberrations).
+- **Real-Time Visualization:** Seamless integration with Napari for immediate visual feedback.
+- **Versatile API:** Access propagators programmatically for custom workflows.
+- **Image Export:** Save computed PSFs in **TIFF format**.
+
+This plugin is a powerful tool for researchers in **optics, computational microscopy, and imaging science**, bridging user-friendly interactivity with the computational capabilities of our Python library.
 
 ----------------------------------
 
@@ -31,42 +33,18 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-Set up a Python virtual environment and install napari following this [guide]. 
+Set up a Python virtual environment and install napari following this [guide].
 
-After activating the virtual environment, you need first to install locally the [psf_generator library] following the instructions below.
+You can install `napari-psfgenerator` via [pip]:
 
-```bash
-git clone git@github.com:Biomedical-Imaging-Group/psf_generator.git
-cd psf_generator
-pip install -e .
-```
+    pip install napari-psfgenerator
 
-Move to the correct working directory, then install locally the [plugin] following the instructions below. 
+To install latest development version :
 
-```bash
-cd .. # move to one directory above
-git clone git@github.com:Biomedical-Imaging-Group/napari-psfgenerator.git
-cd napari-psfgenerator
-pip install -e .
-napari
-```
+    pip install git+https://github.com/VStergiop/napari-psfgenerator.git
 
-Now you can try the plugin out! Click on the menu "Plugins" and select "Propagators (PSF Generator)".
 
-Here we installed the package in "editable mode", so we can modify the code and see the changes in real-time.
-
-[//]: # (You can install `napari-psfgenerator` via [pip]:)
-
-[//]: # ()
-[//]: # (    pip install napari-psfgenerator)
-
-[//]: # ()
-[//]: # ()
-[//]: # ()
-[//]: # (To install latest development version :)
-
-[//]: # ()
-[//]: # (    pip install git+https://github.com/VStergiop/napari-psfgenerator.git)
+Now you can try the plugin out! Open napari, click on the menu "Plugins" and select "Propagators (PSF Generator)".
 
 
 ## Contributing
@@ -93,11 +71,8 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [napari-plugin-template]: https://github.com/napari/napari-plugin-template
-[guide]: https://docs.conda.io/projects/conda/en/4.6.0/commands/list.html
-
+[guide]: https://napari.org/dev/tutorials/fundamentals/installation.html
 [file an issue]: https://github.com/VStergiop/napari-psfgenerator/issues
-
-[napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
