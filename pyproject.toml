@@ -1,6 +1,6 @@
 [project]
 name = "napari-psfgenerator"
-dynamic = ["version"]
+version = "0.2.0"
 description = "Plugin to compute the focal electric field"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -31,6 +31,7 @@ dependencies = [
     "torch>=2.0.0",
     "psf-generator",
     "pyqt5",
+    "napari",
 ]
 
 [project.optional-dependencies]
