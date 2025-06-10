@@ -1,7 +1,6 @@
 import os
 from qtpy.QtWidgets import QFileDialog
 from magicgui import widgets
-import torch
 from psf_generator.propagators.scalar_cartesian_propagator import ScalarCartesianPropagator
 from psf_generator.propagators.scalar_spherical_propagator import ScalarSphericalPropagator
 from psf_generator.propagators.vectorial_cartesian_propagator import VectorialCartesianPropagator
@@ -27,10 +26,8 @@ def propagators_container():
         layout="vertical"
     )
 
-    if torch.cuda.is_available():
-        device_list = ["cpu", "cuda:0"]
-    else:
-        device_list = ["cpu"]
+    device_list = ["cpu", "cuda:0"]
+
     # --- Numerical Parameters ---
     numerical_parameters = widgets.Container(
         widgets=[
@@ -141,10 +138,12 @@ def propagators_container():
         field = propagator.compute_focus_field()
 
         if 'Scalar' in propagator_type.value:
-            field_amplitude = torch.abs(field)
+            # field_amplitude = torch.abs(field)
+            field_amplitude = field.abs()
             result = (field_amplitude/field_amplitude.max()).cpu().numpy().squeeze()
         else:
-            field_amplitude = torch.sqrt(torch.sum(torch.abs(field[:, :, :, :].squeeze()) ** 2, dim=1)).squeeze()
+            # field_amplitude = torch.sqrt(torch.sum(torch.abs(field[:, :, :, :].squeeze()) ** 2, dim=1)).squeeze()
+            field_amplitude = ((field[:, :, :, :].abs().squeeze() ** 2).sum(dim=1)).sqrt().squeeze()
             result = (field_amplitude/field_amplitude.max()).cpu().numpy()
 
         # Save the computed result

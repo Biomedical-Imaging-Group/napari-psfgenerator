@@ -28,12 +28,12 @@ requires-python = ">=3.9"
 dependencies = [
     "magicgui",
     "qtpy",
-    "torch>=2.0.0",
     "psf-generator",
     "pyqt5",
     "napari",
 ]
 
+#    "torch>=2.0.0",
 [project.optional-dependencies]
 
 napari = ["napari"]
