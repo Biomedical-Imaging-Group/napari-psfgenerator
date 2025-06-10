@@ -20,8 +20,8 @@ def propagators_container():
             widgets.Label(value="Physical Parameters"),
             widgets.FloatText(value=1.4, min=0, max=1.5, step=0.1, label="NA"),
             widgets.FloatText(value=632, min=0, max=1300, step=10, label="Wavelength [nm]"),
-            widgets.FloatText(value=2000, min=0, max=5000, step=100, label="Lateral FOV [nm]"),
-            widgets.FloatText(value=4000, min=0, max=5000, step=100, label="Axial FOV (Defocus) [nm]")
+            widgets.FloatText(value=20, min=0, max=1000, step=10, label="Pixel Size [nm]"),
+            widgets.FloatText(value=20, min=0, max=2000, step=10, label="Defocus Step [nm]")
         ],
         layout="vertical"
     )
@@ -109,9 +109,8 @@ def propagators_container():
             'device': numerical_parameters[4].value,
             'wavelength': physical_parameters[2].value,
             'na': physical_parameters[1].value,
-            'fov': physical_parameters[3].value,
-            'defocus_min': -physical_parameters[4].value,
-            'defocus_max': physical_parameters[4].value,
+            'pix_size': physical_parameters[3].value,
+            'defocus_step': physical_parameters[4].value,
             'apod_factor': options_parameters[1].value,
             'gibson_lanni': options_parameters[2].value,
             'zernike_coefficients': [0, 0, 0, 0, options_parameters[4].value, options_parameters[3].value],

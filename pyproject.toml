@@ -33,7 +33,6 @@ dependencies = [
     "napari",
 ]
 
-#    "torch>=2.0.0",
 [project.optional-dependencies]
 
 napari = ["napari"]
