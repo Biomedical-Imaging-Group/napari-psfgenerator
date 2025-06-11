@@ -59,6 +59,7 @@ def propagators_container():
     compute_button = widgets.PushButton(text="Compute and Display")
     save_button = widgets.PushButton(text="Save Image")
     result_viewer = widgets.Label(value="Result will be displayed here")
+    axes_button = widgets.CheckBox(value=True, label="Show XYZ Axes")
 
     # Define a container to hold all grouped sections
     container = widgets.Container(
@@ -69,7 +70,8 @@ def propagators_container():
             options_parameters,
             compute_button,
             save_button,
-            result_viewer
+            result_viewer,
+            axes_button
         ],
         layout="vertical"
     )
@@ -148,7 +150,11 @@ def propagators_container():
         # Save the computed result
         computed_result['data'] = result
 
+        # Add image and enable 3D visualization with axes
         viewer.add_image(result, name=f"Result: {propagator_type.value}", colormap='inferno')
+        viewer.axes.visible = axes_button.value  # Show XYZ axes
+        viewer.axes.colored = False
+        viewer.dims.axis_labels = ["z", "y", "x"]
         result_viewer.value = f"Computation complete! Shape: {result.shape}"
 
 
