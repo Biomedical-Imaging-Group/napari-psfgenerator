@@ -49,8 +49,10 @@ def propagators_container():
             widgets.CheckBox(value=True, label="Gibson-Lanni"),
             widgets.FloatText(value=0.0, min=0, max=5.0, step=0.1, label="Zernike Astigmatism"),
             widgets.FloatText(value=0.0, min=0, max=5.0, step=0.1, label="Zernike Defocus"),
-            widgets.FloatText(value=1.0, min=0, max=100, step=0.1, label="e0x"),
-            widgets.FloatText(value=0.0, min=0, max=100, step=0.1, label="e0y")
+            widgets.FloatText(value=1.0, min=-100, max=100, step=0.1, label="e0x (Real)"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0x (Imag)"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Real)"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Imag)")
         ],
         layout="vertical",
     )
@@ -85,8 +87,10 @@ def propagators_container():
 
         # Show/hide Vectorial-specific parameters in Options
         is_vectorial = selected_type.startswith("Vectorial")
-        options_parameters[5].visible = is_vectorial  # e0x
-        options_parameters[6].visible = is_vectorial  # e0y
+        options_parameters[5].visible = is_vectorial  # e0x (Real)
+        options_parameters[6].visible = is_vectorial  # e0x (Imag)
+        options_parameters[7].visible = is_vectorial  # e0y (Real)
+        options_parameters[8].visible = is_vectorial  # e0y (Imag)
 
         # Show/hide Zernike Astigmatism for spherical propagators
         is_spherical = "Cartesian" in selected_type
@@ -125,9 +129,14 @@ def propagators_container():
             else:
                 propagator = ScalarSphericalPropagator(**kwargs)
         else:
+            e0x_real = options_parameters[5].value
+            e0x_imag = options_parameters[6].value
+            e0y_real = options_parameters[7].value
+            e0y_imag = options_parameters[8].value
+            
             kwargs.update({
-                'e0x': options_parameters[5].value,
-                'e0y': options_parameters[6].value
+                'e0x': complex(e0x_real, e0x_imag),
+                'e0y': complex(e0y_real, e0y_imag)
             })
             if propagator_type.value == "VectorialCartesian":
                 propagator = VectorialCartesianPropagator(**kwargs)
