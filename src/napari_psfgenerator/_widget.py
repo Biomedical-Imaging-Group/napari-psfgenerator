@@ -14,67 +14,140 @@ def propagators_container():
         choices=["ScalarCartesian", "ScalarSpherical", "VectorialCartesian", "VectorialSpherical"],
         label="Select Propagator")
 
-    # --- Parameters (merged Physical + Numerical) ---
+    # --- Parameters ---
     parameters = widgets.Container(
         widgets=[
             widgets.Label(value="<b>Parameters</b>"),
-            widgets.FloatText(value=1.4, min=0, max=1.5, step=0.1, label="NA"),
-            widgets.FloatText(value=632, min=0, max=1300, step=10, label="Wavelength [nm]"),
-            widgets.FloatText(value=20, min=0, max=1000, step=10, label="Pixel Size [nm]"),
-            widgets.FloatText(value=20, min=0, max=2000, step=10, label="Defocus Step [nm]"),
-            widgets.SpinBox(value=203, label="Pixels in Pupil", min=1),
-            widgets.SpinBox(value=201, label="Pixels in PSF", min=1),
-            widgets.SpinBox(value=200, label="Z-Stacks", min=1),
-            widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device")
+            widgets.FloatText(value=1.4, min=0, max=1.5, step=0.1, label="NA",
+                            tooltip="Numerical aperture of the objective lens"),
+            widgets.FloatText(value=632, min=0, max=1300, step=10, label="Wavelength [nm]",
+                            tooltip="Wavelength of incident light in nanometers"),
+            widgets.FloatText(value=20, min=0, max=1000, step=10, label="Pixel Size [nm]",
+                            tooltip="Pixel size of the PSF in nanometers"),
+            widgets.FloatText(value=20, min=0, max=2000, step=10, label="Defocus Step [nm]",
+                            tooltip="Step size between z-planes in nanometers"),
+            widgets.SpinBox(value=203, label="Pixels in Pupil", min=1,
+                          tooltip="Number of pixels used to sample the pupil plane"),
+            widgets.SpinBox(value=201, label="Pixels in PSF", min=1,
+                          tooltip="Number of pixels in the output PSF image (x and y)"),
+            widgets.SpinBox(value=200, label="Z-Stacks", min=1,
+                          tooltip="Number of z-planes to compute"),
+            widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device",
+                           tooltip="Computation device (CPU or CUDA GPU)")
         ],
         layout="vertical"
     )
 
     # --- Corrections Container ---
     corrections_label = widgets.Label(value="<b>Corrections</b>")
-    
-    # Basic corrections
-    apod_factor = widgets.CheckBox(value=False, label="Apodization Factor")
-    gibson_lanni = widgets.CheckBox(value=True, label="Gibson-Lanni")
-    
-    # Envelope (Gaussian incident field)
-    envelope = widgets.FloatText(
-        value=None,
-        min=0,
-        max=10000,
-        step=100,
-        label="Envelope",
-        tooltip="Size of Gaussian envelope. Leave empty for plane wave."
+
+    # Apodization Factor
+    apod_factor = widgets.CheckBox(
+        value=False,
+        label="Apodization Factor",
+        tooltip="Apply apodization factor to account for fill factor of incident beam"
     )
 
-    # Zernike Aberrations (Collapsible)
-    show_zernike = widgets.CheckBox(value=False, label="▶ Zernike Aberrations")
-    zernike_container = widgets.Container(
+    # Envelope (Gaussian incident field)
+    envelope_enabled = widgets.CheckBox(
+        value=False,
+        label="Envelope",
+        tooltip="Gaussian envelope factor for incident field (unitless, order 1)"
+    )
+    envelope = widgets.FloatText(
+        value=1.0,
+        min=0.1,
+        max=2.0,
+        step=0.1,
+        label="Envelope Factor",
+        visible=False
+    )
+
+    # Gibson-Lanni Correction (Collapsible)
+    gibson_lanni = widgets.CheckBox(
+        value=False,
+        label="Gibson-Lanni",
+        tooltip="Apply Gibson-Lanni correction for stratified media"
+    )
+    gibson_lanni_container = widgets.Container(
         widgets=[
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Astigmatism"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Defocus"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma X"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma Y"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Spherical"),
+            widgets.FloatText(value=1000, min=0, max=10000, step=100, label="z_p [nm]",
+                            tooltip="Depth of focal plane in sample"),
+            widgets.FloatText(value=1.3, min=1.0, max=2.0, step=0.01, label="n_s",
+                            tooltip="Refractive index of sample"),
+            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_g",
+                            tooltip="Refractive index of cover slip"),
+            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_g0",
+                            tooltip="Design refractive index of cover slip"),
+            widgets.FloatText(value=170000, min=0, max=500000, step=10000, label="t_g [nm]",
+                            tooltip="Thickness of cover slip"),
+            widgets.FloatText(value=170000, min=0, max=500000, step=10000, label="t_g0 [nm]",
+                            tooltip="Design thickness of cover slip"),
+            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_i",
+                            tooltip="Refractive index of immersion medium"),
+            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_i0",
+                            tooltip="Design refractive index of immersion medium"),
+            widgets.FloatText(value=100000, min=0, max=500000, step=1000, label="t_i0 [nm]",
+                            tooltip="Design thickness of immersion medium"),
         ],
         layout="vertical",
         visible=False
     )
 
+    # Zernike Aberrations (Collapsible)
+    show_zernike = widgets.CheckBox(
+        value=False,
+        label="Zernike Aberrations",
+        tooltip="Add Zernike aberration coefficients"
+    )
+    zernike_container = widgets.Container(
+        widgets=[
+            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Astigmatism",
+                            tooltip="Zernike astigmatism coefficient"),
+            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Defocus",
+                            tooltip="Zernike defocus coefficient"),
+            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma X",
+                            tooltip="Zernike coma X coefficient"),
+            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma Y",
+                            tooltip="Zernike coma Y coefficient"),
+            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Spherical",
+                            tooltip="Zernike spherical aberration coefficient"),
+        ],
+        layout="vertical",
+        visible=False
+    )
+
+    def toggle_envelope(event):
+        envelope.visible = envelope_enabled.value
+
+    envelope_enabled.changed.connect(toggle_envelope)
+
+    def toggle_gibson_lanni(event):
+        gibson_lanni_container.visible = gibson_lanni.value
+
+    gibson_lanni.changed.connect(toggle_gibson_lanni)
+
     def toggle_zernike(event):
         zernike_container.visible = show_zernike.value
-        show_zernike.label = "▼ Zernike Aberrations" if show_zernike.value else "▶ Zernike Aberrations"
-    
+
     show_zernike.changed.connect(toggle_zernike)
 
     # Polarization (Vectorial) (Collapsible)
-    show_vectorial = widgets.CheckBox(value=False, label="▶ Polarization (Vectorial)")
+    show_vectorial = widgets.CheckBox(
+        value=False,
+        label="Polarization (Vectorial)",
+        tooltip="Set polarization state for vectorial propagators"
+    )
     vectorial_container = widgets.Container(
         widgets=[
-            widgets.FloatText(value=1.0, min=-100, max=100, step=0.1, label="e0x (Real)"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0x (Imag)"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Real)"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Imag)")
+            widgets.FloatText(value=1.0, min=-100, max=100, step=0.1, label="e0x (Real)",
+                            tooltip="Real part of x-component of electric field"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0x (Imag)",
+                            tooltip="Imaginary part of x-component of electric field"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Real)",
+                            tooltip="Real part of y-component of electric field"),
+            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Imag)",
+                            tooltip="Imaginary part of y-component of electric field")
         ],
         layout="vertical",
         visible=False
@@ -82,8 +155,7 @@ def propagators_container():
 
     def toggle_vectorial(event):
         vectorial_container.visible = show_vectorial.value
-        show_vectorial.label = "▼ Polarization (Vectorial)" if show_vectorial.value else "▶ Polarization (Vectorial)"
-    
+
     show_vectorial.changed.connect(toggle_vectorial)
 
     # Group all corrections together
@@ -91,8 +163,10 @@ def propagators_container():
         widgets=[
             corrections_label,
             apod_factor,
-            gibson_lanni,
+            envelope_enabled,
             envelope,
+            gibson_lanni,
+            gibson_lanni_container,
             show_zernike,
             zernike_container,
             show_vectorial,
@@ -160,9 +234,9 @@ def propagators_container():
             'defocus_step': parameters[4].value,
             'apod_factor': apod_factor.value,
             'gibson_lanni': gibson_lanni.value,
-            'envelope': envelope.value,
+            'envelope': envelope.value if envelope_enabled.value else None,
             'zernike_coefficients': [
-                0, 0, 
+                0, 0,
                 zernike_container[2].value,  # Coma X
                 zernike_container[3].value,  # Coma Y
                 zernike_container[1].value,  # Defocus
@@ -170,6 +244,20 @@ def propagators_container():
                 zernike_container[4].value   # Spherical
             ],
         }
+
+        # Add Gibson-Lanni parameters if enabled
+        if gibson_lanni.value:
+            kwargs.update({
+                'z_p': gibson_lanni_container[0].value,
+                'n_s': gibson_lanni_container[1].value,
+                'n_g': gibson_lanni_container[2].value,
+                'n_g0': gibson_lanni_container[3].value,
+                't_g': gibson_lanni_container[4].value,
+                't_g0': gibson_lanni_container[5].value,
+                'n_i': gibson_lanni_container[6].value,
+                'n_i0': gibson_lanni_container[7].value,
+                't_i0': gibson_lanni_container[8].value,
+            })
 
         # Add specific parameters based on the propagator type
         if propagator_type.value.startswith("Scalar"):
