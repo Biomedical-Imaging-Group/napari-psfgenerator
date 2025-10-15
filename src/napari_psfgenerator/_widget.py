@@ -1,5 +1,6 @@
 import os
-from qtpy.QtWidgets import QFileDialog
+import json
+from qtpy.QtWidgets import QFileDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFormLayout
 from magicgui import widgets
 from psf_generator.propagators.scalar_cartesian_propagator import ScalarCartesianPropagator
 from psf_generator.propagators.scalar_spherical_propagator import ScalarSphericalPropagator
@@ -13,6 +14,67 @@ def propagators_container():
     propagator_type = widgets.ComboBox(
         choices=["ScalarCartesian", "ScalarSpherical", "VectorialCartesian", "VectorialSpherical"],
         label="Select Propagator")
+
+    # Polarization (Vectorial) - Button interface (defined early so it can be added to parameters)
+    # Store polarization values
+    polarization_params = {
+        'e0x_real': 1.0,
+        'e0x_imag': 0.0,
+        'e0y_real': 0.0,
+        'e0y_imag': 0.0
+    }
+
+    polarization_button = widgets.PushButton(text="Polarization", visible=False)
+
+    def open_polarization_dialog():
+        dialog = QDialog()
+        dialog.setWindowTitle("Polarization (Vectorial)")
+        dialog.setMinimumWidth(400)
+
+        main_layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # Create parameter widgets
+        param_widgets = {}
+        param_data = [
+            ('e0x_real', 'e0x (Real):', polarization_params['e0x_real'], "Real part of x-component of electric field"),
+            ('e0x_imag', 'e0x (Imag):', polarization_params['e0x_imag'], "Imaginary part of x-component of electric field"),
+            ('e0y_real', 'e0y (Real):', polarization_params['e0y_real'], "Real part of y-component of electric field"),
+            ('e0y_imag', 'e0y (Imag):', polarization_params['e0y_imag'], "Imaginary part of y-component of electric field"),
+        ]
+
+        for key, label, value, tooltip in param_data:
+            widget = widgets.FloatText(value=value, min=-100, max=100, step=0.1, tooltip=tooltip)
+            param_widgets[key] = widget
+            form_layout.addRow(label, widget.native)
+
+        main_layout.addLayout(form_layout)
+
+        # Button layout
+        button_layout = QHBoxLayout()
+        save_btn = QPushButton("Save")
+        reset_btn = QPushButton("Reset")
+        button_layout.addWidget(save_btn)
+        button_layout.addWidget(reset_btn)
+
+        def save_params():
+            for key, widget in param_widgets.items():
+                polarization_params[key] = widget.value
+            dialog.accept()
+
+        def reset_params():
+            defaults = {'e0x_real': 1.0, 'e0x_imag': 0.0, 'e0y_real': 0.0, 'e0y_imag': 0.0}
+            for key, widget in param_widgets.items():
+                widget.value = defaults[key]
+
+        save_btn.clicked.connect(save_params)
+        reset_btn.clicked.connect(reset_params)
+
+        main_layout.addLayout(button_layout)
+        dialog.setLayout(main_layout)
+        dialog.exec_()
+
+    polarization_button.clicked.connect(open_polarization_dialog)
 
     # --- Parameters ---
     parameters = widgets.Container(
@@ -33,7 +95,8 @@ def propagators_container():
             widgets.SpinBox(value=200, label="Z-Stacks", min=1,
                           tooltip="Number of z-planes to compute"),
             widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device",
-                           tooltip="Computation device (CPU or CUDA GPU)")
+                           tooltip="Computation device (CPU or CUDA GPU)"),
+            polarization_button
         ],
         layout="vertical"
     )
@@ -63,59 +126,161 @@ def propagators_container():
         visible=False
     )
 
-    # Gibson-Lanni Correction (Collapsible)
+    # Gibson-Lanni Correction with Popup
     gibson_lanni = widgets.CheckBox(
         value=False,
         label="Gibson-Lanni",
         tooltip="Apply Gibson-Lanni correction for stratified media"
     )
-    gibson_lanni_container = widgets.Container(
-        widgets=[
-            widgets.FloatText(value=1000, min=0, max=10000, step=100, label="z_p [nm]",
-                            tooltip="Depth of focal plane in sample"),
-            widgets.FloatText(value=1.3, min=1.0, max=2.0, step=0.01, label="n_s",
-                            tooltip="Refractive index of sample"),
-            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_g",
-                            tooltip="Refractive index of cover slip"),
-            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_g0",
-                            tooltip="Design refractive index of cover slip"),
-            widgets.FloatText(value=170000, min=0, max=500000, step=10000, label="t_g [nm]",
-                            tooltip="Thickness of cover slip"),
-            widgets.FloatText(value=170000, min=0, max=500000, step=10000, label="t_g0 [nm]",
-                            tooltip="Design thickness of cover slip"),
-            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_i",
-                            tooltip="Refractive index of immersion medium"),
-            widgets.FloatText(value=1.5, min=1.0, max=2.0, step=0.01, label="n_i0",
-                            tooltip="Design refractive index of immersion medium"),
-            widgets.FloatText(value=100000, min=0, max=500000, step=1000, label="t_i0 [nm]",
-                            tooltip="Design thickness of immersion medium"),
-        ],
-        layout="vertical",
-        visible=False
-    )
 
-    # Zernike Aberrations (Collapsible)
+    # Store Gibson-Lanni parameters (thicknesses stored in nm internally)
+    gibson_lanni_params = {
+        'z_p': 1000.0,
+        'n_s': 1.3,
+        'n_g': 1.5,
+        'n_g0': 1.5,
+        't_g': 170000.0,
+        't_g0': 170000.0,
+        'n_i': 1.5,
+        'n_i0': 1.5,
+        't_i0': 100000.0
+    }
+
+    gibson_lanni_button = widgets.PushButton(text="Parameters", visible=False)
+
+    def open_gibson_lanni_dialog():
+        dialog = QDialog()
+        dialog.setWindowTitle("Gibson-Lanni Parameters")
+        dialog.setMinimumWidth(400)
+
+        main_layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # Create parameter widgets with labels (thicknesses in microns for UI)
+        param_widgets = {}
+        param_data = [
+            ('z_p', 'z_p [nm]:', gibson_lanni_params['z_p'], 0, 10000, 100, 1.0, "Depth of focal plane in sample"),
+            ('n_s', 'n_s:', gibson_lanni_params['n_s'], 1.0, 2.0, 0.01, 1.0, "Refractive index of sample"),
+            ('n_g', 'n_g:', gibson_lanni_params['n_g'], 1.0, 2.0, 0.01, 1.0, "Refractive index of cover slip"),
+            ('n_g0', 'n_g0:', gibson_lanni_params['n_g0'], 1.0, 2.0, 0.01, 1.0, "Design refractive index of cover slip"),
+            ('t_g', 't_g [μm]:', gibson_lanni_params['t_g'], 0, 500, 1, 1000.0, "Thickness of cover slip"),
+            ('t_g0', 't_g0 [μm]:', gibson_lanni_params['t_g0'], 0, 500, 1, 1000.0, "Design thickness of cover slip"),
+            ('n_i', 'n_i:', gibson_lanni_params['n_i'], 1.0, 2.0, 0.01, 1.0, "Refractive index of immersion medium"),
+            ('n_i0', 'n_i0:', gibson_lanni_params['n_i0'], 1.0, 2.0, 0.01, 1.0, "Design refractive index of immersion medium"),
+            ('t_i0', 't_i0 [μm]:', gibson_lanni_params['t_i0'], 0, 500, 1, 1000.0, "Design thickness of immersion medium"),
+        ]
+
+        for key, label, value, min_val, max_val, step, conversion, tooltip in param_data:
+            display_value = value / conversion
+            widget = widgets.FloatText(value=display_value, min=min_val, max=max_val, step=step, tooltip=tooltip)
+            param_widgets[key] = (widget, conversion)
+            form_layout.addRow(label, widget.native)
+
+        main_layout.addLayout(form_layout)
+
+        # Button layout
+        button_layout = QHBoxLayout()
+        save_btn = QPushButton("Save")
+        reset_btn = QPushButton("Reset")
+        button_layout.addWidget(save_btn)
+        button_layout.addWidget(reset_btn)
+
+        def save_params():
+            for key, (widget, conversion) in param_widgets.items():
+                gibson_lanni_params[key] = widget.value * conversion
+            dialog.accept()
+
+        def reset_params():
+            defaults = {'z_p': 1000.0, 'n_s': 1.3, 'n_g': 1.5, 'n_g0': 1.5,
+                       't_g': 170000.0, 't_g0': 170000.0, 'n_i': 1.5, 'n_i0': 1.5, 't_i0': 100000.0}
+            for key, (widget, conversion) in param_widgets.items():
+                widget.value = defaults[key] / conversion
+
+        save_btn.clicked.connect(save_params)
+        reset_btn.clicked.connect(reset_params)
+
+        main_layout.addLayout(button_layout)
+        dialog.setLayout(main_layout)
+        dialog.exec_()
+
+    gibson_lanni_button.clicked.connect(open_gibson_lanni_dialog)
+
+    # Zernike Aberrations with Popup
     show_zernike = widgets.CheckBox(
         value=False,
         label="Zernike Aberrations",
         tooltip="Add Zernike aberration coefficients"
     )
-    zernike_container = widgets.Container(
-        widgets=[
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Astigmatism",
-                            tooltip="Zernike astigmatism coefficient"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Defocus",
-                            tooltip="Zernike defocus coefficient"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma X",
-                            tooltip="Zernike coma X coefficient"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Coma Y",
-                            tooltip="Zernike coma Y coefficient"),
-            widgets.FloatText(value=0.0, min=-5.0, max=5.0, step=0.1, label="Spherical",
-                            tooltip="Zernike spherical aberration coefficient"),
-        ],
-        layout="vertical",
-        visible=False
-    )
+
+    # Store Zernike parameters
+    zernike_params = {
+        'astigmatism': 0.0,
+        'defocus': 0.0,
+        'coma_x': 0.0,
+        'coma_y': 0.0,
+        'spherical': 0.0
+    }
+
+    zernike_button = widgets.PushButton(text="Parameters", visible=False)
+
+    def open_zernike_dialog():
+        dialog = QDialog()
+        dialog.setWindowTitle("Zernike Aberrations")
+        dialog.setMinimumWidth(400)
+
+        main_layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # Check if using spherical propagator
+        is_spherical = "Spherical" in propagator_type.value
+
+        # Create parameter widgets with labels
+        param_widgets = {}
+        param_data = [
+            ('astigmatism', 'Astigmatism:', zernike_params['astigmatism'], "Zernike astigmatism coefficient", False),
+            ('defocus', 'Defocus:', zernike_params['defocus'], "Zernike defocus coefficient", True),
+            ('coma_x', 'Coma X:', zernike_params['coma_x'], "Zernike coma X coefficient", False),
+            ('coma_y', 'Coma Y:', zernike_params['coma_y'], "Zernike coma Y coefficient", False),
+            ('spherical', 'Spherical:', zernike_params['spherical'], "Zernike spherical aberration coefficient", True),
+        ]
+
+        for key, label, value, tooltip, allowed_for_spherical in param_data:
+            widget = widgets.FloatText(value=value, min=-5.0, max=5.0, step=0.1, tooltip=tooltip)
+
+            # Disable widget if using spherical propagator and this param is not allowed
+            if is_spherical and not allowed_for_spherical:
+                widget.enabled = False
+                widget.native.setStyleSheet("QDoubleSpinBox { color: gray; }")
+
+            param_widgets[key] = widget
+            form_layout.addRow(label, widget.native)
+
+        main_layout.addLayout(form_layout)
+
+        # Button layout
+        button_layout = QHBoxLayout()
+        save_btn = QPushButton("Save")
+        reset_btn = QPushButton("Reset")
+        button_layout.addWidget(save_btn)
+        button_layout.addWidget(reset_btn)
+
+        def save_params():
+            for key, widget in param_widgets.items():
+                zernike_params[key] = widget.value
+            dialog.accept()
+
+        def reset_params():
+            for widget in param_widgets.values():
+                widget.value = 0.0
+
+        save_btn.clicked.connect(save_params)
+        reset_btn.clicked.connect(reset_params)
+
+        main_layout.addLayout(button_layout)
+        dialog.setLayout(main_layout)
+        dialog.exec_()
+
+    zernike_button.clicked.connect(open_zernike_dialog)
 
     def toggle_envelope(event):
         envelope.visible = envelope_enabled.value
@@ -123,40 +288,14 @@ def propagators_container():
     envelope_enabled.changed.connect(toggle_envelope)
 
     def toggle_gibson_lanni(event):
-        gibson_lanni_container.visible = gibson_lanni.value
+        gibson_lanni_button.visible = gibson_lanni.value
 
     gibson_lanni.changed.connect(toggle_gibson_lanni)
 
     def toggle_zernike(event):
-        zernike_container.visible = show_zernike.value
+        zernike_button.visible = show_zernike.value
 
     show_zernike.changed.connect(toggle_zernike)
-
-    # Polarization (Vectorial) (Collapsible)
-    show_vectorial = widgets.CheckBox(
-        value=False,
-        label="Polarization (Vectorial)",
-        tooltip="Set polarization state for vectorial propagators"
-    )
-    vectorial_container = widgets.Container(
-        widgets=[
-            widgets.FloatText(value=1.0, min=-100, max=100, step=0.1, label="e0x (Real)",
-                            tooltip="Real part of x-component of electric field"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0x (Imag)",
-                            tooltip="Imaginary part of x-component of electric field"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Real)",
-                            tooltip="Real part of y-component of electric field"),
-            widgets.FloatText(value=0.0, min=-100, max=100, step=0.1, label="e0y (Imag)",
-                            tooltip="Imaginary part of y-component of electric field")
-        ],
-        layout="vertical",
-        visible=False
-    )
-
-    def toggle_vectorial(event):
-        vectorial_container.visible = show_vectorial.value
-
-    show_vectorial.changed.connect(toggle_vectorial)
 
     # Group all corrections together
     corrections_container = widgets.Container(
@@ -166,11 +305,9 @@ def propagators_container():
             envelope_enabled,
             envelope,
             gibson_lanni,
-            gibson_lanni_container,
+            gibson_lanni_button,
             show_zernike,
-            zernike_container,
-            show_vectorial,
-            vectorial_container,
+            zernike_button,
         ],
         layout="vertical"
     )
@@ -181,6 +318,10 @@ def propagators_container():
     result_viewer = widgets.Label(value="Result will be displayed here")
     axes_button = widgets.CheckBox(value=True, label="Show XYZ Axes")
 
+    # Metadata buttons
+    export_params_button = widgets.PushButton(text="📤 Export Parameters")
+    load_params_button = widgets.PushButton(text="📥 Load Parameters")
+
     # Define a container to hold all grouped sections
     container = widgets.Container(
         widgets=[
@@ -190,7 +331,9 @@ def propagators_container():
             compute_button,
             save_button,
             result_viewer,
-            axes_button
+            axes_button,
+            export_params_button,
+            load_params_button
         ],
         layout="vertical"
     )
@@ -202,17 +345,9 @@ def propagators_container():
     def update_propagator_params(event):
         selected_type = propagator_type.value
 
-        # Show/hide Vectorial-specific parameters
+        # Show/hide Polarization button for Vectorial propagators
         is_vectorial = selected_type.startswith("Vectorial")
-        show_vectorial.visible = is_vectorial
-        if not is_vectorial:
-            show_vectorial.value = False
-            vectorial_container.visible = False
-
-        # Show/hide Zernike Astigmatism for Cartesian propagators
-        is_cartesian = "Cartesian" in selected_type
-        if is_cartesian and len(zernike_container) > 0:
-            zernike_container[0].visible = True  # Astigmatism visible for Cartesian
+        polarization_button.visible = is_vectorial
 
     # Connect the dropdown value change to the update function
     propagator_type.changed.connect(update_propagator_params)
@@ -237,27 +372,17 @@ def propagators_container():
             'envelope': envelope.value if envelope_enabled.value else None,
             'zernike_coefficients': [
                 0, 0,
-                zernike_container[2].value,  # Coma X
-                zernike_container[3].value,  # Coma Y
-                zernike_container[1].value,  # Defocus
-                zernike_container[0].value,  # Astigmatism
-                zernike_container[4].value   # Spherical
+                zernike_params['coma_x'],
+                zernike_params['coma_y'],
+                zernike_params['defocus'],
+                zernike_params['astigmatism'],
+                zernike_params['spherical']
             ],
         }
 
         # Add Gibson-Lanni parameters if enabled
         if gibson_lanni.value:
-            kwargs.update({
-                'z_p': gibson_lanni_container[0].value,
-                'n_s': gibson_lanni_container[1].value,
-                'n_g': gibson_lanni_container[2].value,
-                'n_g0': gibson_lanni_container[3].value,
-                't_g': gibson_lanni_container[4].value,
-                't_g0': gibson_lanni_container[5].value,
-                'n_i': gibson_lanni_container[6].value,
-                'n_i0': gibson_lanni_container[7].value,
-                't_i0': gibson_lanni_container[8].value,
-            })
+            kwargs.update(gibson_lanni_params)
 
         # Add specific parameters based on the propagator type
         if propagator_type.value.startswith("Scalar"):
@@ -267,14 +392,9 @@ def propagators_container():
                 propagator = ScalarSphericalPropagator(**kwargs)
         else:
             # Combine real and imaginary parts into complex numbers
-            e0x_real = vectorial_container[0].value
-            e0x_imag = vectorial_container[1].value
-            e0y_real = vectorial_container[2].value
-            e0y_imag = vectorial_container[3].value
-            
             kwargs.update({
-                'e0x': complex(e0x_real, e0x_imag),
-                'e0y': complex(e0y_real, e0y_imag)
+                'e0x': complex(polarization_params['e0x_real'], polarization_params['e0x_imag']),
+                'e0y': complex(polarization_params['e0y_real'], polarization_params['e0y_imag'])
             })
             if propagator_type.value == "VectorialCartesian":
                 propagator = VectorialCartesianPropagator(**kwargs)
@@ -327,5 +447,105 @@ def propagators_container():
                 result_viewer.value = f"Image saved to {filepath}"
 
     save_button.clicked.connect(save_computed_image)
+
+    # Export parameters to JSON
+    def export_parameters():
+        metadata = {
+            'propagator_type': propagator_type.value,
+            'parameters': {
+                'na': parameters[1].value,
+                'wavelength': parameters[2].value,
+                'pix_size': parameters[3].value,
+                'defocus_step': parameters[4].value,
+                'n_pix_pupil': parameters[5].value,
+                'n_pix_psf': parameters[6].value,
+                'n_defocus': parameters[7].value,
+                'device': parameters[8].value,
+            },
+            'corrections': {
+                'apod_factor': apod_factor.value,
+                'envelope_enabled': envelope_enabled.value,
+                'envelope': envelope.value,
+                'gibson_lanni': gibson_lanni.value,
+                'gibson_lanni_params': gibson_lanni_params.copy(),
+                'zernike_enabled': show_zernike.value,
+                'zernike_params': zernike_params.copy(),
+            },
+            'polarization': polarization_params.copy()
+        }
+
+        dialog = QFileDialog()
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        dialog.setNameFilters(["JSON files (*.json)", "All files (*)"])
+        dialog.setDefaultSuffix("json")
+        dialog.setWindowTitle("Export Parameters")
+        dialog.setGeometry(300, 300, 600, 400)
+
+        if dialog.exec_():
+            filepath = dialog.selectedFiles()[0]
+            if filepath:
+                with open(filepath, 'w') as f:
+                    json.dump(metadata, f, indent=2)
+                result_viewer.value = f"Parameters exported to {filepath}"
+
+    export_params_button.clicked.connect(export_parameters)
+
+    # Load parameters from JSON
+    def load_parameters():
+        dialog = QFileDialog()
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        dialog.setNameFilters(["JSON files (*.json)", "All files (*)"])
+        dialog.setWindowTitle("Load Parameters")
+        dialog.setGeometry(300, 300, 600, 400)
+
+        if dialog.exec_():
+            filepath = dialog.selectedFiles()[0]
+            if filepath:
+                try:
+                    with open(filepath, 'r') as f:
+                        metadata = json.load(f)
+
+                    # Load propagator type
+                    propagator_type.value = metadata.get('propagator_type', 'ScalarCartesian')
+
+                    # Load parameters
+                    params = metadata.get('parameters', {})
+                    parameters[1].value = params.get('na', 1.4)
+                    parameters[2].value = params.get('wavelength', 632)
+                    parameters[3].value = params.get('pix_size', 20)
+                    parameters[4].value = params.get('defocus_step', 20)
+                    parameters[5].value = params.get('n_pix_pupil', 203)
+                    parameters[6].value = params.get('n_pix_psf', 201)
+                    parameters[7].value = params.get('n_defocus', 200)
+                    parameters[8].value = params.get('device', 'cpu')
+
+                    # Load corrections
+                    corrections = metadata.get('corrections', {})
+                    apod_factor.value = corrections.get('apod_factor', False)
+                    envelope_enabled.value = corrections.get('envelope_enabled', False)
+                    envelope.value = corrections.get('envelope', 1.0)
+                    gibson_lanni.value = corrections.get('gibson_lanni', False)
+
+                    # Load Gibson-Lanni params
+                    gl_params = corrections.get('gibson_lanni_params', {})
+                    gibson_lanni_params.update(gl_params)
+
+                    # Load Zernike params
+                    show_zernike.value = corrections.get('zernike_enabled', False)
+                    z_params = corrections.get('zernike_params', {})
+                    zernike_params.update(z_params)
+
+                    # Load polarization
+                    polarization = metadata.get('polarization', {})
+                    polarization_params.update(polarization)
+
+                    # Update visibility based on loaded values
+                    update_propagator_params(None)
+
+                    result_viewer.value = f"Parameters loaded from {filepath}"
+                except Exception as e:
+                    result_viewer.value = f"Error loading parameters: {str(e)}"
+
+    load_params_button.clicked.connect(load_parameters)
 
     return container
