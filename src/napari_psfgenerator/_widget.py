@@ -7,6 +7,16 @@ from psf_generator.propagators.scalar_spherical_propagator import ScalarSpherica
 from psf_generator.propagators.vectorial_cartesian_propagator import VectorialCartesianPropagator
 from psf_generator.propagators.vectorial_spherical_propagator import VectorialSphericalPropagator
 from napari import current_viewer
+
+# Check if CUDA is available and count GPUs
+try:
+    import torch
+    CUDA_AVAILABLE = torch.cuda.is_available()
+    NUM_GPUS = torch.cuda.device_count() if CUDA_AVAILABLE else 0
+except ImportError:
+    CUDA_AVAILABLE = False
+    NUM_GPUS = 0
+
 viewer = current_viewer()  # Get the current Napari viewer
 
 def propagators_container():
@@ -115,7 +125,10 @@ def propagators_container():
             form_layout.addRow(label, widget.native)
 
         # Device selection
-        device_widget = widgets.ComboBox(choices=["cpu", "cuda:0"], value=advanced_params['device'],
+        device_choices = ["cpu"]
+        for i in range(NUM_GPUS):
+            device_choices.append(f"cuda:{i}")
+        device_widget = widgets.ComboBox(choices=device_choices, value=advanced_params['device'],
                                         label="Device", tooltip="Computation device (CPU or CUDA GPU)")
         param_widgets['device'] = device_widget
         form_layout.addRow("Device:", device_widget.native)
