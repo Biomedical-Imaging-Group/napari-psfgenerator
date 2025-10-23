@@ -249,32 +249,101 @@ def propagators_container():
     def open_gibson_lanni_dialog():
         dialog = QDialog()
         dialog.setWindowTitle("Gibson-Lanni Parameters")
-        dialog.setMinimumWidth(400)
+        dialog.setMinimumWidth(450)
 
         main_layout = QVBoxLayout()
-        form_layout = QFormLayout()
+        grid_layout = QGridLayout()
 
-        # Create parameter widgets with labels (thicknesses in microns for UI)
+        # Create parameter widgets
         param_widgets = {}
-        param_data = [
-            ('z_p', 'z_p [nm]:', gibson_lanni_params['z_p'], 0, 10000, 100, 1.0, "Depth of focal plane in sample"),
-            ('n_s', 'n_s:', gibson_lanni_params['n_s'], 1.0, 2.0, 0.01, 1.0, "Refractive index of sample"),
-            ('n_g', 'n_g:', gibson_lanni_params['n_g'], 1.0, 2.0, 0.01, 1.0, "Refractive index of cover slip"),
-            ('n_g0', 'n_g0:', gibson_lanni_params['n_g0'], 1.0, 2.0, 0.01, 1.0, "Design refractive index of cover slip"),
-            ('t_g', 't_g [μm]:', gibson_lanni_params['t_g'], 0, 500, 1, 1000.0, "Thickness of cover slip"),
-            ('t_g0', 't_g0 [μm]:', gibson_lanni_params['t_g0'], 0, 500, 1, 1000.0, "Design thickness of cover slip"),
-            ('n_i', 'n_i:', gibson_lanni_params['n_i'], 1.0, 2.0, 0.01, 1.0, "Refractive index of immersion medium"),
-            ('n_i0', 'n_i0:', gibson_lanni_params['n_i0'], 1.0, 2.0, 0.01, 1.0, "Design refractive index of immersion medium"),
-            ('t_i0', 't_i0 [μm]:', gibson_lanni_params['t_i0'], 0, 500, 1, 1000.0, "Design thickness of immersion medium"),
-        ]
 
-        for key, label, value, min_val, max_val, step, conversion, tooltip in param_data:
-            display_value = value / conversion
-            widget = widgets.FloatText(value=display_value, min=min_val, max=max_val, step=step, tooltip=tooltip)
-            param_widgets[key] = (widget, conversion)
-            form_layout.addRow(label, widget.native)
+        row = 0
 
-        main_layout.addLayout(form_layout)
+        # Sample section
+        sample_label = QLabel("<b>Sample</b>")
+        grid_layout.addWidget(sample_label, row, 0)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Refractive index:"), row, 1)
+        n_s = widgets.FloatText(value=gibson_lanni_params['n_s'], min=1.0, max=2.0, step=0.01,
+                               tooltip="Refractive index of sample")
+        n_s.native.setMaximumWidth(100)
+        param_widgets['n_s'] = (n_s, 1.0)
+        grid_layout.addWidget(n_s.native, row, 2)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Depth [nm]:"), row, 1)
+        z_p = widgets.FloatText(value=gibson_lanni_params['z_p'], min=0, max=10000, step=100,
+                                tooltip="Depth of focal plane in sample")
+        z_p.native.setMaximumWidth(100)
+        param_widgets['z_p'] = (z_p, 1.0)
+        grid_layout.addWidget(z_p.native, row, 2)
+        row += 1
+
+        # Coverslip section
+        coverslip_label = QLabel("<b>Coverslip</b>")
+        grid_layout.addWidget(coverslip_label, row, 0)
+        grid_layout.addWidget(QLabel("<b>Actual</b>"), row, 2)
+        grid_layout.addWidget(QLabel("<b>Design</b>"), row, 3)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Refractive index:"), row, 1)
+        n_g = widgets.FloatText(value=gibson_lanni_params['n_g'], min=1.0, max=2.0, step=0.01,
+                               tooltip="Refractive index of cover slip")
+        n_g.native.setMaximumWidth(100)
+        param_widgets['n_g'] = (n_g, 1.0)
+        grid_layout.addWidget(n_g.native, row, 2)
+
+        n_g0 = widgets.FloatText(value=gibson_lanni_params['n_g0'], min=1.0, max=2.0, step=0.01,
+                                tooltip="Design refractive index of cover slip")
+        n_g0.native.setMaximumWidth(100)
+        param_widgets['n_g0'] = (n_g0, 1.0)
+        grid_layout.addWidget(n_g0.native, row, 3)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Thickness [μm]:"), row, 1)
+        t_g = widgets.FloatText(value=gibson_lanni_params['t_g'] / 1000.0, min=0, max=500, step=1,
+                               tooltip="Thickness of cover slip")
+        t_g.native.setMaximumWidth(100)
+        param_widgets['t_g'] = (t_g, 1000.0)
+        grid_layout.addWidget(t_g.native, row, 2)
+
+        t_g0 = widgets.FloatText(value=gibson_lanni_params['t_g0'] / 1000.0, min=0, max=500, step=1,
+                                tooltip="Design thickness of cover slip")
+        t_g0.native.setMaximumWidth(100)
+        param_widgets['t_g0'] = (t_g0, 1000.0)
+        grid_layout.addWidget(t_g0.native, row, 3)
+        row += 1
+
+        # Immersion section
+        immersion_label = QLabel("<b>Immersion</b>")
+        grid_layout.addWidget(immersion_label, row, 0)
+        grid_layout.addWidget(QLabel("<b>Actual</b>"), row, 2)
+        grid_layout.addWidget(QLabel("<b>Design</b>"), row, 3)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Refractive index:"), row, 1)
+        n_i = widgets.FloatText(value=gibson_lanni_params['n_i'], min=1.0, max=2.0, step=0.01,
+                               tooltip="Refractive index of immersion medium")
+        n_i.native.setMaximumWidth(100)
+        param_widgets['n_i'] = (n_i, 1.0)
+        grid_layout.addWidget(n_i.native, row, 2)
+
+        n_i0 = widgets.FloatText(value=gibson_lanni_params['n_i0'], min=1.0, max=2.0, step=0.01,
+                                tooltip="Design refractive index of immersion medium")
+        n_i0.native.setMaximumWidth(100)
+        param_widgets['n_i0'] = (n_i0, 1.0)
+        grid_layout.addWidget(n_i0.native, row, 3)
+        row += 1
+
+        grid_layout.addWidget(QLabel("Thickness [μm]:"), row, 1)
+        t_i0 = widgets.FloatText(value=gibson_lanni_params['t_i0'] / 1000.0, min=0, max=500, step=1,
+                                tooltip="Design thickness of immersion medium")
+        t_i0.native.setMaximumWidth(100)
+        param_widgets['t_i0'] = (t_i0, 1000.0)
+        grid_layout.addWidget(t_i0.native, row, 3)
+
+        main_layout.addLayout(grid_layout)
 
         # Button layout
         button_layout = QHBoxLayout()
