@@ -34,7 +34,7 @@ def propagators_container():
         'e0y_imag': 0.0
     }
 
-    polarization_button = widgets.PushButton(text="Polarization", visible=False)
+    polarization_button = widgets.PushButton(text="Incident polarization", visible=False)
 
     def open_polarization_dialog():
         dialog = QDialog()
@@ -47,10 +47,10 @@ def propagators_container():
         # Create parameter widgets
         param_widgets = {}
         param_data = [
-            ('e0x_real', 'e0x (Real):', polarization_params['e0x_real'], "Real part of x-component of electric field"),
-            ('e0x_imag', 'e0x (Imag):', polarization_params['e0x_imag'], "Imaginary part of x-component of electric field"),
-            ('e0y_real', 'e0y (Real):', polarization_params['e0y_real'], "Real part of y-component of electric field"),
-            ('e0y_imag', 'e0y (Imag):', polarization_params['e0y_imag'], "Imaginary part of y-component of electric field"),
+            ('e0x_real', 'E_x (Real):', polarization_params['e0x_real'], "Real part of x-component of electric field"),
+            ('e0x_imag', '    (Imag):', polarization_params['e0x_imag'], "Imaginary part of x-component of electric field"),
+            ('e0y_real', 'E_y (Real):', polarization_params['e0y_real'], "Real part of y-component of electric field"),
+            ('e0y_imag', '    (Imag):', polarization_params['e0y_imag'], "Imaginary part of y-component of electric field"),
         ]
 
         for key, label, value, tooltip in param_data:
@@ -109,11 +109,11 @@ def propagators_container():
         # Create parameter widgets
         param_widgets = {}
         param_data = [
-            ('pix_size', 'Pixel Size [nm]:', advanced_params['pix_size'], 0, 1000, 10, "Pixel size of the PSF in nanometers"),
-            ('defocus_step', 'Defocus Step [nm]:', advanced_params['defocus_step'], 0, 2000, 10, "Step size between z-planes in nanometers"),
+            ('pix_size', 'Pixel Size [nm]:', advanced_params['pix_size'], 0, 1000, 10, "Pixel size of the PSF"),
+            ('defocus_step', 'Defocus Step [nm]:', advanced_params['defocus_step'], 0, 2000, 10, "Step size between z-planes"),
             ('n_pix_pupil', 'Pixels in Pupil:', advanced_params['n_pix_pupil'], 1, 1000, 1, "Number of pixels used to sample the pupil plane"),
             ('n_pix_psf', 'Pixels in PSF:', advanced_params['n_pix_psf'], 1, 1000, 1, "Number of pixels in the output PSF image (x and y)"),
-            ('n_defocus', 'Z-Stacks:', advanced_params['n_defocus'], 1, 1000, 1, "Number of z-planes to compute"),
+            ('n_defocus', 'Number of Z planes:', advanced_params['n_defocus'], 1, 1000, 1, "Number of z-planes for the output PSF"),
         ]
 
         for key, label, value, min_val, max_val, step, tooltip in param_data:
@@ -169,7 +169,7 @@ def propagators_container():
             widgets.FloatText(value=1.4, min=0, max=1.5, step=0.1, label="NA",
                             tooltip="Numerical aperture of the objective lens"),
             widgets.FloatText(value=632, min=0, max=1300, step=10, label="Wavelength [nm]",
-                            tooltip="Wavelength of incident light in nanometers"),
+                            tooltip="Wavelength of incident light"),
             advanced_params_button,
             polarization_button
         ],
@@ -183,7 +183,7 @@ def propagators_container():
     apod_factor = widgets.CheckBox(
         value=False,
         label="Apodization Factor",
-        tooltip="Apply apodization factor to account for fill factor of incident beam"
+        tooltip="Apply apodization factor sqrt(cos(theta))"
     )
 
     # Envelope (Gaussian incident field)
