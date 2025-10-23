@@ -1,6 +1,6 @@
 import os
 import json
-from qtpy.QtWidgets import QFileDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFormLayout
+from qtpy.QtWidgets import QFileDialog, QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFormLayout, QLabel, QGridLayout
 from magicgui import widgets
 from psf_generator.propagators.scalar_cartesian_propagator import ScalarCartesianPropagator
 from psf_generator.propagators.scalar_spherical_propagator import ScalarSphericalPropagator
@@ -39,26 +39,49 @@ def propagators_container():
     def open_polarization_dialog():
         dialog = QDialog()
         dialog.setWindowTitle("Polarization (Vectorial)")
-        dialog.setMinimumWidth(400)
+        dialog.setMinimumWidth(300)
 
         main_layout = QVBoxLayout()
-        form_layout = QFormLayout()
+        grid_layout = QGridLayout()
 
-        # Create parameter widgets
+        # Create parameter widgets with improved layout
         param_widgets = {}
-        param_data = [
-            ('e0x_real', 'E_x (Real):', polarization_params['e0x_real'], "Real part of x-component of electric field"),
-            ('e0x_imag', '    (Imag):', polarization_params['e0x_imag'], "Imaginary part of x-component of electric field"),
-            ('e0y_real', 'E_y (Real):', polarization_params['e0y_real'], "Real part of y-component of electric field"),
-            ('e0y_imag', '    (Imag):', polarization_params['e0y_imag'], "Imaginary part of y-component of electric field"),
-        ]
 
-        for key, label, value, tooltip in param_data:
-            widget = widgets.FloatText(value=value, min=-100, max=100, step=0.1, tooltip=tooltip)
-            param_widgets[key] = widget
-            form_layout.addRow(label, widget.native)
+        # E_x section
+        ex_label = QLabel("<b>E_x</b>")
+        grid_layout.addWidget(ex_label, 0, 0)
+        grid_layout.addWidget(QLabel("Real:"), 0, 1)
+        ex_real = widgets.FloatText(value=polarization_params['e0x_real'], min=-100, max=100, step=0.1,
+                                    tooltip="Real part of x-component of electric field")
+        ex_real.native.setMaximumWidth(100)
+        param_widgets['e0x_real'] = ex_real
+        grid_layout.addWidget(ex_real.native, 0, 2)
 
-        main_layout.addLayout(form_layout)
+        grid_layout.addWidget(QLabel("Imag:"), 1, 1)
+        ex_imag = widgets.FloatText(value=polarization_params['e0x_imag'], min=-100, max=100, step=0.1,
+                                    tooltip="Imaginary part of x-component of electric field")
+        ex_imag.native.setMaximumWidth(100)
+        param_widgets['e0x_imag'] = ex_imag
+        grid_layout.addWidget(ex_imag.native, 1, 2)
+
+        # E_y section
+        ey_label = QLabel("<b>E_y</b>")
+        grid_layout.addWidget(ey_label, 2, 0)
+        grid_layout.addWidget(QLabel("Real:"), 2, 1)
+        ey_real = widgets.FloatText(value=polarization_params['e0y_real'], min=-100, max=100, step=0.1,
+                                    tooltip="Real part of y-component of electric field")
+        ey_real.native.setMaximumWidth(100)
+        param_widgets['e0y_real'] = ey_real
+        grid_layout.addWidget(ey_real.native, 2, 2)
+
+        grid_layout.addWidget(QLabel("Imag:"), 3, 1)
+        ey_imag = widgets.FloatText(value=polarization_params['e0y_imag'], min=-100, max=100, step=0.1,
+                                    tooltip="Imaginary part of y-component of electric field")
+        ey_imag.native.setMaximumWidth(100)
+        param_widgets['e0y_imag'] = ey_imag
+        grid_layout.addWidget(ey_imag.native, 3, 2)
+
+        main_layout.addLayout(grid_layout)
 
         # Button layout
         button_layout = QHBoxLayout()
