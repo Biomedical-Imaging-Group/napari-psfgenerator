@@ -76,6 +76,79 @@ def propagators_container():
 
     polarization_button.clicked.connect(open_polarization_dialog)
 
+    # Store advanced parameters
+    advanced_params = {
+        'pix_size': 20.0,
+        'defocus_step': 20.0,
+        'n_pix_pupil': 203,
+        'n_pix_psf': 201,
+        'n_defocus': 200,
+        'device': 'cpu'
+    }
+
+    advanced_params_button = widgets.PushButton(text="More parameters")
+
+    def open_advanced_params_dialog():
+        dialog = QDialog()
+        dialog.setWindowTitle("Advanced Parameters")
+        dialog.setMinimumWidth(400)
+
+        main_layout = QVBoxLayout()
+        form_layout = QFormLayout()
+
+        # Create parameter widgets
+        param_widgets = {}
+        param_data = [
+            ('pix_size', 'Pixel Size [nm]:', advanced_params['pix_size'], 0, 1000, 10, "Pixel size of the PSF in nanometers"),
+            ('defocus_step', 'Defocus Step [nm]:', advanced_params['defocus_step'], 0, 2000, 10, "Step size between z-planes in nanometers"),
+            ('n_pix_pupil', 'Pixels in Pupil:', advanced_params['n_pix_pupil'], 1, 1000, 1, "Number of pixels used to sample the pupil plane"),
+            ('n_pix_psf', 'Pixels in PSF:', advanced_params['n_pix_psf'], 1, 1000, 1, "Number of pixels in the output PSF image (x and y)"),
+            ('n_defocus', 'Z-Stacks:', advanced_params['n_defocus'], 1, 1000, 1, "Number of z-planes to compute"),
+        ]
+
+        for key, label, value, min_val, max_val, step, tooltip in param_data:
+            if key in ['n_pix_pupil', 'n_pix_psf', 'n_defocus']:
+                widget = widgets.SpinBox(value=int(value), min=min_val, max=max_val, tooltip=tooltip)
+            else:
+                widget = widgets.FloatText(value=value, min=min_val, max=max_val, step=step, tooltip=tooltip)
+            param_widgets[key] = widget
+            form_layout.addRow(label, widget.native)
+
+        # Device selection
+        device_widget = widgets.ComboBox(choices=["cpu", "cuda:0"], value=advanced_params['device'],
+                                        label="Device", tooltip="Computation device (CPU or CUDA GPU)")
+        param_widgets['device'] = device_widget
+        form_layout.addRow("Device:", device_widget.native)
+
+        main_layout.addLayout(form_layout)
+
+        # Button layout
+        button_layout = QHBoxLayout()
+        save_btn = QPushButton("Save")
+        reset_btn = QPushButton("Reset")
+        button_layout.addWidget(save_btn)
+        button_layout.addWidget(reset_btn)
+
+        def save_params():
+            for key, widget in param_widgets.items():
+                advanced_params[key] = widget.value
+            dialog.accept()
+
+        def reset_params():
+            defaults = {'pix_size': 20.0, 'defocus_step': 20.0, 'n_pix_pupil': 203,
+                       'n_pix_psf': 201, 'n_defocus': 200, 'device': 'cpu'}
+            for key, widget in param_widgets.items():
+                widget.value = defaults[key]
+
+        save_btn.clicked.connect(save_params)
+        reset_btn.clicked.connect(reset_params)
+
+        main_layout.addLayout(button_layout)
+        dialog.setLayout(main_layout)
+        dialog.exec_()
+
+    advanced_params_button.clicked.connect(open_advanced_params_dialog)
+
     # --- Parameters ---
     parameters = widgets.Container(
         widgets=[
@@ -84,18 +157,7 @@ def propagators_container():
                             tooltip="Numerical aperture of the objective lens"),
             widgets.FloatText(value=632, min=0, max=1300, step=10, label="Wavelength [nm]",
                             tooltip="Wavelength of incident light in nanometers"),
-            widgets.FloatText(value=20, min=0, max=1000, step=10, label="Pixel Size [nm]",
-                            tooltip="Pixel size of the PSF in nanometers"),
-            widgets.FloatText(value=20, min=0, max=2000, step=10, label="Defocus Step [nm]",
-                            tooltip="Step size between z-planes in nanometers"),
-            widgets.SpinBox(value=203, label="Pixels in Pupil", min=1,
-                          tooltip="Number of pixels used to sample the pupil plane"),
-            widgets.SpinBox(value=201, label="Pixels in PSF", min=1,
-                          tooltip="Number of pixels in the output PSF image (x and y)"),
-            widgets.SpinBox(value=200, label="Z-Stacks", min=1,
-                          tooltip="Number of z-planes to compute"),
-            widgets.ComboBox(choices=["cpu", "cuda:0"], value="cpu", label="Device",
-                           tooltip="Computation device (CPU or CUDA GPU)"),
+            advanced_params_button,
             polarization_button
         ],
         layout="vertical"
@@ -312,13 +374,11 @@ def propagators_container():
         layout="vertical"
     )
 
-    # Buttons and Result Display
+    # Action buttons
     compute_button = widgets.PushButton(text="▶ Compute and Display")
-    save_button = widgets.PushButton(text="💾 Save Image")
     result_viewer = widgets.Label(value="")
     axes_button = widgets.CheckBox(value=True, label="Show XYZ Axes")
-
-    # Metadata buttons
+    save_button = widgets.PushButton(text="💾 Save Image")
     export_params_button = widgets.PushButton(text="📤 Export Parameters")
     load_params_button = widgets.PushButton(text="📥 Load Parameters")
 
@@ -329,14 +389,19 @@ def propagators_container():
             parameters,
             corrections_container,
             compute_button,
-            save_button,
             result_viewer,
             axes_button,
+            save_button,
             export_params_button,
             load_params_button
         ],
         layout="vertical"
     )
+
+    # Add stretch to push action buttons to the bottom
+    # Insert stretch before the action buttons
+    layout = container.native.layout()
+    layout.insertStretch(3, 1)  # Insert stretch after corrections_container (index 2)
 
     # Store the computed result for saving
     computed_result = {'data': None}
@@ -359,14 +424,14 @@ def propagators_container():
     def compute_result():
         # Gather common parameters
         kwargs = {
-            'n_pix_pupil': parameters[5].value,
-            'n_pix_psf': parameters[6].value,
-            'n_defocus': parameters[7].value,
-            'device': parameters[8].value,
+            'n_pix_pupil': advanced_params['n_pix_pupil'],
+            'n_pix_psf': advanced_params['n_pix_psf'],
+            'n_defocus': advanced_params['n_defocus'],
+            'device': advanced_params['device'],
             'wavelength': parameters[2].value,
             'na': parameters[1].value,
-            'pix_size': parameters[3].value,
-            'defocus_step': parameters[4].value,
+            'pix_size': advanced_params['pix_size'],
+            'defocus_step': advanced_params['defocus_step'],
             'apod_factor': apod_factor.value,
             'gibson_lanni': gibson_lanni.value,
             'envelope': envelope.value if envelope_enabled.value else None,
@@ -455,12 +520,12 @@ def propagators_container():
             'parameters': {
                 'na': parameters[1].value,
                 'wavelength': parameters[2].value,
-                'pix_size': parameters[3].value,
-                'defocus_step': parameters[4].value,
-                'n_pix_pupil': parameters[5].value,
-                'n_pix_psf': parameters[6].value,
-                'n_defocus': parameters[7].value,
-                'device': parameters[8].value,
+                'pix_size': advanced_params['pix_size'],
+                'defocus_step': advanced_params['defocus_step'],
+                'n_pix_pupil': advanced_params['n_pix_pupil'],
+                'n_pix_psf': advanced_params['n_pix_psf'],
+                'n_defocus': advanced_params['n_defocus'],
+                'device': advanced_params['device'],
             },
             'corrections': {
                 'apod_factor': apod_factor.value,
@@ -512,12 +577,12 @@ def propagators_container():
                     params = metadata.get('parameters', {})
                     parameters[1].value = params.get('na', 1.4)
                     parameters[2].value = params.get('wavelength', 632)
-                    parameters[3].value = params.get('pix_size', 20)
-                    parameters[4].value = params.get('defocus_step', 20)
-                    parameters[5].value = params.get('n_pix_pupil', 203)
-                    parameters[6].value = params.get('n_pix_psf', 201)
-                    parameters[7].value = params.get('n_defocus', 200)
-                    parameters[8].value = params.get('device', 'cpu')
+                    advanced_params['pix_size'] = params.get('pix_size', 20)
+                    advanced_params['defocus_step'] = params.get('defocus_step', 20)
+                    advanced_params['n_pix_pupil'] = params.get('n_pix_pupil', 203)
+                    advanced_params['n_pix_psf'] = params.get('n_pix_psf', 201)
+                    advanced_params['n_defocus'] = params.get('n_defocus', 200)
+                    advanced_params['device'] = params.get('device', 'cpu')
 
                     # Load corrections
                     corrections = metadata.get('corrections', {})
