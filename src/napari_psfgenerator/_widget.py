@@ -315,7 +315,7 @@ def propagators_container():
     # Buttons and Result Display
     compute_button = widgets.PushButton(text="▶ Compute and Display")
     save_button = widgets.PushButton(text="💾 Save Image")
-    result_viewer = widgets.Label(value="Result will be displayed here")
+    result_viewer = widgets.Label(value="")
     axes_button = widgets.CheckBox(value=True, label="Show XYZ Axes")
 
     # Metadata buttons
