@@ -113,8 +113,8 @@ def propagators_container():
     advanced_params = {
         'pix_size': 20.0,
         'defocus_step': 20.0,
-        'n_pix_pupil': 203,
-        'n_pix_psf': 201,
+        'n_pix_pupil': 200,
+        'n_pix_psf': 200,
         'n_defocus': 200,
         'device': 'cpu'
     }
@@ -171,8 +171,8 @@ def propagators_container():
             dialog.accept()
 
         def reset_params():
-            defaults = {'pix_size': 20.0, 'defocus_step': 20.0, 'n_pix_pupil': 203,
-                       'n_pix_psf': 201, 'n_defocus': 200, 'device': 'cpu'}
+            defaults = {'pix_size': 20.0, 'defocus_step': 20.0, 'n_pix_pupil': 200,
+                       'n_pix_psf': 200, 'n_defocus': 200, 'device': 'cpu'}
             for key, widget in param_widgets.items():
                 widget.value = defaults[key]
 
@@ -691,8 +691,8 @@ def propagators_container():
                     parameters[2].value = params.get('wavelength', 632)
                     advanced_params['pix_size'] = params.get('pix_size', 20)
                     advanced_params['defocus_step'] = params.get('defocus_step', 20)
-                    advanced_params['n_pix_pupil'] = params.get('n_pix_pupil', 203)
-                    advanced_params['n_pix_psf'] = params.get('n_pix_psf', 201)
+                    advanced_params['n_pix_pupil'] = params.get('n_pix_pupil', 200)
+                    advanced_params['n_pix_psf'] = params.get('n_pix_psf', 200)
                     advanced_params['n_defocus'] = params.get('n_defocus', 200)
                     advanced_params['device'] = params.get('device', 'cpu')
 
