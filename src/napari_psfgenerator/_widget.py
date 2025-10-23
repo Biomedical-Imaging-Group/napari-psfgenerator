@@ -324,6 +324,7 @@ def propagators_container():
 
             # Disable widget if using spherical propagator and this param is not allowed
             if is_spherical and not allowed_for_spherical:
+                widget.value = 0.0
                 widget.enabled = False
                 widget.native.setStyleSheet("QDoubleSpinBox { color: gray; }")
 
@@ -426,6 +427,12 @@ def propagators_container():
         # Show/hide Polarization button for Vectorial propagators
         is_vectorial = selected_type.startswith("Vectorial")
         polarization_button.visible = is_vectorial
+
+        # Reset Zernike parameters not allowed for spherical propagators
+        if "Spherical" in selected_type:
+            zernike_params['astigmatism'] = 0.0
+            zernike_params['coma_x'] = 0.0
+            zernike_params['coma_y'] = 0.0
 
     # Connect the dropdown value change to the update function
     propagator_type.changed.connect(update_propagator_params)
